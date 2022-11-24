@@ -28,13 +28,13 @@ pip install -v -e .
 
 ### Running Examples
 
-#### Test CLIP-IQA on KonIQ-10k
+#### Test CLIP-IQA on [KonIQ-10k](http://database.mmsp-kn.de/koniq-10k-database.html)
 
 ```
 python demo/clipiqa_koniq_demo.py
 ```
 
-#### Test CLIP-IQA on Live-iWT
+#### Test CLIP-IQA on [Live-iWT](https://live.ece.utexas.edu/research/ChallengeDB/index.html)
 
 ```
 python demo/clipiqa_liveiwt_demo.py
