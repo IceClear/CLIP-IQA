@@ -18,7 +18,7 @@ S-Lab, Nanyang Technological University
 - [x] ~~Code release~~
 
 ### Dependencies and Installation
-The same as MMEditing(https://mmediting.readthedocs.io/en/latest/install.html), currently is using an old version.
+The same as [MMEditing](https://mmediting.readthedocs.io/en/latest/install.html), currently is using an old version.
 ```
 conda create -n clipiqa python=3.6
 pip install torch==1.8.1+cu101 torchvision==0.9.1+cu101 torchaudio==0.8.1 -f https://download.pytorch.org/whl/torch_stable.html # For CUDA 10.1
@@ -47,13 +47,13 @@ python demo/clipiqa_liveiwt_demo.py
 python tools/train.py configs/clipiqa/clipiqa_coop_koniq.py
 ```
 
-#### Test CLIP-IQA+ on KonIQ-10k
+#### Test CLIP-IQA+ on KonIQ-10k ([Checkpoint](https://github.com/IceClear/CLIP-IQA/releases/download/Pretrained/iter_80000.pth))
 
 ```
 python demo/clipiqa_koniq_demo.py --config configs/clipiqa/clipiqa_coop_koniq.py --checkpoint ./iter_80000.pth
 ```
 
-[Note] You may change prompts for different datasets, please refer to [config files](https://github.com/IceClear/CLIP-IQA/tree/main/configs/restorers/clipiqa/clipiqa_coop_koniq.py#L9) for details.
+[Note] You may change prompts for different datasets, please refer to [config files](https://github.com/IceClear/CLIP-IQA/blob/main/configs/clipiqa/clipiqa_attribute_test.py#L11) for details.
 
 [Note] For testing on a single image, please refer to [here](https://github.com/IceClear/CLIP-IQA/tree/main/demo/clipiqa_single_image_demo.py) for details.
 
