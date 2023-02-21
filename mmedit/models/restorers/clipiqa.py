@@ -14,13 +14,12 @@ from ..builder import build_backbone, build_loss
 
 @MODELS.register_module()
 class CLIPIQA(BasicRestorer):
-    """BasicVSR model for video super-resolution.
+    """Exploring CLIP for Assessing the Look and Feel of Images
 
-    Note that this model is used for IconVSR.
+    Note that this model is used for CLIPIQA.
 
     Paper:
-        BasicVSR: The Search for Essential Components in Video Super-Resolution
-        and Beyond, CVPR, 2021
+        Exploring CLIP for Assessing the Look and Feel of Images, AAAI, 2023
 
     Args:
         generator (dict): Config for the generator structure.
@@ -203,22 +202,6 @@ class CLIPIQA(BasicRestorer):
 
 @MODELS.register_module()
 class CLIPIQASelfTrain(BasicRestorer):
-    """BasicVSR model for video super-resolution.
-
-    Note that this model is used for IconVSR.
-
-    Paper:
-        BasicVSR: The Search for Essential Components in Video Super-Resolution
-        and Beyond, CVPR, 2021
-
-    Args:
-        generator (dict): Config for the generator structure.
-        pixel_loss (dict): Config for pixel-wise loss.
-        train_cfg (dict): Config for training. Default: None.
-        test_cfg (dict): Config for testing. Default: None.
-        pretrained (str): Path for pretrained model. Default: None.
-    """
-
     def __init__(self,
                  generator,
                  clipmodel,
