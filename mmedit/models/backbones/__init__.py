@@ -15,6 +15,7 @@ from .sr_backbones import (EDSR, LIIFEDSR, LIIFRDN, RDN, SRCNN, BasicVSRNet,
                            BasicVSRPlusPlus, DICNet, EDVRNet, GLEANStyleGANv2,
                            IconVSR, MSRResNet, RealBasicVSRNet, RRDBNet,
                            TDANNet, TOFlow, TTSRNet, CLIPIQAPredictor, CLIPIQAFixed)
+from .vfi_backbones import CAINNet, FLAVRNet, TOFlowVFINet
 
 __all__ = [
     'MSRResNet', 'VGG16', 'PlainDecoder', 'SimpleEncoderDecoder',
@@ -27,6 +28,6 @@ __all__ = [
     'IndexNetDecoder', 'TOFlow', 'ResGCAEncoder', 'ResGCADecoder', 'SRCNN',
     'UnetGenerator', 'ResnetGenerator', 'FBAResnetDilated', 'FBADecoder',
     'BasicVSRNet', 'IconVSR', 'TTSRNet', 'GLEANStyleGANv2', 'TDANNet',
-    'LIIFEDSR', 'LIIFRDN', 'BasicVSRPlusPlus', 'RealBasicVSRNet', 'CLIPIQAPredictor',
-    'CLIPIQAFixed'
+    'LIIFEDSR', 'LIIFRDN', 'BasicVSRPlusPlus', 'RealBasicVSRNet', 'CAINNet',
+    'TOFlowVFINet', 'FLAVRNet', 'CLIPIQAPredictor', 'CLIPIQAFixed'
 ]

@@ -17,11 +17,8 @@ from torch.nn import functional as F
 
 from mmedit.models.components.clip import clip
 from mmedit.models.components.clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
-from .hyperiqa_utils import HyperFeatureEncoder
 import copy
 from torchvision import models
-
-from .restormer_utils import TransformerBlock
 
 def load_clip_to_cpu(backbone_name):
     url = clip._MODELS[backbone_name]

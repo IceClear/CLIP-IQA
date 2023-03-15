@@ -57,8 +57,18 @@ class EvalIterHook(Hook):
         eval_res = self.dataloader.dataset.evaluate(
             results, logger=runner.logger, **self.eval_kwargs)
         for name, val in eval_res.items():
+            if isinstance(val, dict):
+                runner.log_buffer.output.update(val)
+                continue
             runner.log_buffer.output[name] = val
         runner.log_buffer.ready = True
+        # call `after_val_epoch` after evaluation.
+        # This is a hack.
+        # Because epoch does not naturally exist In IterBasedRunner,
+        # thus we consider the end of an evluation as the end of an epoch.
+        # With this hack , we can support epoch based hooks.
+        if 'iter' in runner.__class__.__name__.lower():
+            runner.call_hook('after_val_epoch')
 
 
 class DistEvalIterHook(EvalIterHook):

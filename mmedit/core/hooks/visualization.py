@@ -7,9 +7,11 @@ from mmcv.runner import HOOKS, Hook
 from mmcv.runner.dist_utils import master_only
 from torchvision.utils import save_image
 
+from mmedit.utils import deprecated_function
+
 
 @HOOKS.register_module()
-class VisualizationHook(Hook):
+class MMEditVisualizationHook(Hook):
     """Visualization hook.
 
     In this hook, we use the official api `save_image` in torchvision to save
@@ -70,7 +72,7 @@ class VisualizationHook(Hook):
 
         filename = self.filename_tmpl.format(runner.iter + 1)
 
-        img_list = [x for k, x in results.items() if k in self.res_name_list]
+        img_list = [results[k] for k in self.res_name_list if k in results]
         img_cat = torch.cat(img_list, dim=3).detach()
         if self.rerange:
             img_cat = ((img_cat + 1) / 2)
@@ -82,3 +84,11 @@ class VisualizationHook(Hook):
             osp.join(self.output_dir, filename),
             nrow=self.nrow,
             padding=self.padding)
+
+
+@HOOKS.register_module()
+class VisualizationHook(MMEditVisualizationHook):
+
+    @deprecated_function('0.16.0', '0.20.0', 'use \'MMEditVisualizationHook\'')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)

@@ -30,7 +30,7 @@ def main():
     model = init_model(
         args.config, args.checkpoint, device=torch.device('cuda', args.device))
 
-    csv_list = pd.read_csv(args.csv_path, error_bad_lines=True)
+    csv_list = pd.read_csv(args.csv_path, on_bad_lines='skip')
     img_test = csv_list[csv_list.set=='test'].reset_index()
 
     txt_path = './koniq_resize.txt'

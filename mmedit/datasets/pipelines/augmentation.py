@@ -2,14 +2,16 @@
 import copy
 import math
 import numbers
+import os
 import os.path as osp
+import random
 
 import cv2
 import mmcv
 import numpy as np
-
+import torch
+import torchvision.transforms as transforms
 from PIL import Image
-from torchvision.transforms import Resize as Transformresize
 
 from ..registry import PIPELINES
 
@@ -36,7 +38,7 @@ class Resize:
 
     Args:
         keys (list[str]): The images to be resized.
-        scale (float | Tuple[int]): If scale is Tuple(int), target spatial
+        scale (float | tuple[int]): If scale is tuple[int], target spatial
             size (h, w). Otherwise, target spatial size is scaled by input
             size.
             Note that when it is used, `size_factor` and `max_size` are
@@ -71,8 +73,7 @@ class Resize:
                  max_size=None,
                  interpolation='bilinear',
                  backend=None,
-                 output_keys=None,
-                 keep_short=False):
+                 output_keys=None):
         assert keys, 'Keys should not be empty.'
         if output_keys:
             assert len(output_keys) == len(keys)
@@ -108,7 +109,6 @@ class Resize:
         self.keep_ratio = keep_ratio
         self.interpolation = interpolation
         self.backend = backend
-        self.keep_short = keep_short
 
     def _resize(self, img):
         if self.keep_ratio:
@@ -148,18 +148,6 @@ class Resize:
                 new_w = min(self.max_size - (self.max_size % self.size_factor),
                             new_w)
             self.scale = (new_w, new_h)
-
-        if self.keep_short:
-            h, w = results[self.keys[0]].shape[:2]
-            if h > w:
-                radio = float(h) / float(w)
-                keep_side = self.scale[1]
-                self.scale = (int(keep_side), int(keep_side*radio))
-            else:
-                radio = float(w) / float(h)
-                keep_side = self.scale[0]
-                self.scale = (int(keep_side*radio), int(keep_side))
-
         for key, out_key in zip(self.keys, self.output_keys):
             results[out_key] = self._resize(results[key])
             if len(results[out_key].shape) == 2:
@@ -178,100 +166,51 @@ class Resize:
             f'(keys={self.keys}, output_keys={self.output_keys}, '
             f'scale={self.scale}, '
             f'keep_ratio={self.keep_ratio}, size_factor={self.size_factor}, '
-            f'max_size={self.max_size},interpolation={self.interpolation})')
+            f'max_size={self.max_size}, interpolation={self.interpolation})')
         return repr_str
 
+
 @PIPELINES.register_module()
-class Resize_PIL:
-    """Resize data to a specific size for training or resize the images to fit
-    the network input regulation for testing.
-
-    When used for resizing images to fit network input regulation, the case is
-    that a network may have several downsample and then upsample operation,
-    then the input height and width should be divisible by the downsample
-    factor of the network.
-    For example, the network would downsample the input for 5 times with
-    stride 2, then the downsample factor is 2^5 = 32 and the height
-    and width should be divisible by 32.
-
-    Required keys are the keys in attribute "keys", added or modified keys are
-    "keep_ratio", "scale_factor", "interpolation" and the
-    keys in attribute "keys".
-
-    All keys in "keys" should have the same shape. "test_trans" is used to
-    record the test transformation to align the input's shape.
+class RandomRotation:
+    """Rotate the image by a randomly-chosen angle, measured in degree.
 
     Args:
-        keys (list[str]): The images to be resized.
-        scale (float | Tuple[int]): If scale is Tuple(int), target spatial
-            size (h, w). Otherwise, target spatial size is scaled by input
-            size.
-            Note that when it is used, `size_factor` and `max_size` are
-            useless. Default: None
-            Note that it is used togher with `size_factor`.
-        interpolation (str): Algorithm used for interpolation:
-            "nearest" | "bilinear" | "bicubic" | "area" | "lanczos".
-            Default: "bilinear".
-        output_keys (list[str] | None): The resized images. Default: None
-            Note that if it is not `None`, its length should be equal to keys.
+        keys (list[str]): The images to be rotated.
+        degrees (tuple[float] | tuple[int] | float | int): If it is a tuple,
+            it represents a range (min, max). If it is a float or int,
+            the range is constructed as (-degrees, degrees).
     """
 
-    def __init__(self,
-                 keys,
-                 scale=None,
-                 interpolation='bilinear',
-                 output_keys=None):
-
-        assert keys, 'Keys should not be empty.'
-        if output_keys:
-            assert len(output_keys) == len(keys)
-        else:
-            output_keys = keys
+    def __init__(self, keys, degrees):
+        if isinstance(degrees, (int, float)):
+            if degrees < 0.0:
+                raise ValueError('Degrees must be positive if it is a number.')
+            else:
+                degrees = (-degrees, degrees)
+        elif not mmcv.is_tuple_of(degrees, (int, float)):
+            raise TypeError(f'Degrees must be float | int or tuple of float | '
+                            'int, but got '
+                            f'{type(degrees)}.')
 
         self.keys = keys
-        self.output_keys = output_keys
-        self.scale = scale
-        if interpolation == 'nearest':
-            self.interpolation = Image.NEAREST
-        elif interpolation == 'bilinear':
-            self.interpolation = Image.BILINEAR
-        elif interpolation == 'bicubic':
-            self.interpolation = Image.BICUBIC
-        else:
-            raise TypeError(
-                f'Got unsupported interpolation: {interpolation}.')
-
-    def _resize(self, img):
-        img = Image.fromarray(np.uint8(img))
-        resize_func = Transformresize(self.scale, interpolation=self.interpolation)
-        img = resize_func(img)
-        return np.asarray(img)
+        self.degrees = degrees
 
     def __call__(self, results):
-        """Call function.
+        angle = random.uniform(self.degrees[0], self.degrees[1])
 
-        Args:
-            results (dict): A dict containing the necessary information and
-                data for augmentation.
-
-        Returns:
-            dict: A dict containing the processed data and information.
-        """
-        for key, out_key in zip(self.keys, self.output_keys):
-            results[out_key] = self._resize(results[key])
-            if len(results[out_key].shape) == 2:
-                results[out_key] = np.expand_dims(results[out_key], axis=2)
-
-        results['interpolation'] = self.interpolation
+        for k in self.keys:
+            results[k] = mmcv.imrotate(results[k], angle)
+            if results[k].ndim == 2:
+                results[k] = np.expand_dims(results[k], axis=2)
+        results['degrees'] = self.degrees
 
         return results
 
     def __repr__(self):
         repr_str = self.__class__.__name__
-        repr_str += (
-            f'(keys={self.keys}, output_keys={self.output_keys}, '
-            f'scale={self.scale}')
+        repr_str += (f'(keys={self.keys}, degrees={self.degrees})')
         return repr_str
+
 
 @PIPELINES.register_module()
 class Flip:
@@ -509,7 +448,11 @@ class RandomAffine:
         else:
             shear = 0.0
 
-        flip = (np.random.rand(2) < flip_ratio).astype(np.int) * 2 - 1
+        # Because `flip` is used as a multiplier in line 479 and 480,
+        # so -1 stands for flip and 1 stands for no flip. Thus `flip`
+        # should be an 'inverse' flag as the result of the comparison.
+        # See https://github.com/open-mmlab/mmediting/pull/799 for more detail
+        flip = (np.random.rand(2) > flip_ratio).astype(np.int32) * 2 - 1
 
         return angle, translations, scale, shear, flip
 
@@ -583,7 +526,7 @@ class RandomAffine:
             params = self._get_params(self.degrees, self.translate, self.scale,
                                       self.shear, self.flip_ratio, (h, w))
 
-        center = (w * 0.5 + 0.5, h * 0.5 + 0.5)
+        center = (w * 0.5 - 0.5, h * 0.5 - 0.5)
         M = self._get_inverse_affine_matrix(center, *params)
         M = np.array(M).reshape((2, 3))
 
@@ -672,6 +615,89 @@ class RandomJitter:
 
     def __repr__(self):
         return self.__class__.__name__ + f'hue_range={self.hue_range}'
+
+
+@PIPELINES.register_module()
+class ColorJitter:
+    """An interface for torch color jitter so that it can be invoked in
+    mmediting pipeline.
+
+    Randomly change the brightness, contrast and saturation of an image.
+    Modified keys are the attributes specified in "keys".
+
+    Args:
+        keys (list[str]): The images to be resized.
+        channel_order (str): Order of channel, candidates are 'bgr' and 'rgb'.
+            Default: 'rgb'.
+
+    Notes: ``**kwards`` follows the args list of
+        ``torchvision.transforms.ColorJitter``.
+
+        brightness (float or tuple of float (min, max)): How much to jitter
+            brightness. brightness_factor is chosen uniformly from
+            [max(0, 1 - brightness), 1 + brightness] or the given [min, max].
+            Should be non negative numbers.
+        contrast (float or tuple of float (min, max)): How much to jitter
+            contrast. contrast_factor is chosen uniformly from
+            [max(0, 1 - contrast), 1 + contrast] or the given [min, max].
+            Should be non negative numbers.
+        saturation (float or tuple of float (min, max)): How much to jitter
+            saturation. saturation_factor is chosen uniformly from
+            [max(0, 1 - saturation), 1 + saturation] or the given [min, max].
+            Should be non negative numbers.
+        hue (float or tuple of float (min, max)): How much to jitter hue.
+            hue_factor is chosen uniformly from [-hue, hue] or the given
+            [min, max].
+            Should have 0<= hue <= 0.5 or -0.5 <= min <= max <= 0.5.
+    """
+
+    def __init__(self, keys, channel_order='rgb', **kwargs):
+        assert keys, 'Keys should not be empty.'
+        assert 'to_rgb' not in kwargs, (
+            '`to_rgb` is not support in ColorJitter, '
+            "which is replaced by `channel_order` ('rgb' or 'bgr')")
+
+        self.keys = keys
+        self.channel_order = channel_order
+        self.transform = transforms.ColorJitter(**kwargs)
+
+    def _color_jitter(self, image, this_seed):
+
+        if self.channel_order.lower() == 'bgr':
+            image = image[..., ::-1]
+
+        image = Image.fromarray(image)
+        torch.manual_seed(this_seed)
+        image = self.transform(image)
+        image = np.asarray(image)
+
+        if self.channel_order.lower() == 'bgr':
+            image = image[..., ::-1]
+
+        return image
+
+    def __call__(self, results):
+
+        this_seed = random.randint(0, 2**32)
+
+        for k in self.keys:
+            if isinstance(results[k], list):
+                results[k] = [
+                    self._color_jitter(v, this_seed) for v in results[k]
+                ]
+            else:
+                results[k] = self._color_jitter(results[k], this_seed)
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += (f'(keys={self.keys}, channel_order={self.channel_order}, '
+                     f'brightness={self.transform.brightness}, '
+                     f'contrast={self.transform.contrast}, '
+                     f'saturation={self.transform.saturation}, '
+                     f'hue={self.transform.hue})')
+
+        return repr_str
 
 
 class BinarizeImage:
@@ -866,7 +892,7 @@ class GenerateFrameIndiceswithPadding:
         Returns:
             dict: A dict containing the processed data and information.
         """
-        clip_name, frame_name = results['key'].split('/')
+        clip_name, frame_name = results['key'].split(os.sep)
         current_idx = int(frame_name)
         max_frame_num = results['max_frame_num'] - 1  # start from 0
         num_input_frames = results['num_input_frames']
@@ -916,8 +942,8 @@ class GenerateFrameIndiceswithPadding:
 
 @PIPELINES.register_module()
 class GenerateFrameIndices:
-    """Generate frame index for REDS datasets. It also performs
-    temporal augmention with random interval.
+    """Generate frame index for REDS datasets. It also performs temporal
+    augmention with random interval.
 
     Required keys: lq_path, gt_path, key, num_input_frames
     Added or modified keys:  lq_path, gt_path, interval, reverse
@@ -945,7 +971,7 @@ class GenerateFrameIndices:
             dict: A dict containing the processed data and information.
         """
         clip_name, frame_name = results['key'].split(
-            '/')  # key example: 000/00000000
+            os.sep)  # key example: 000/00000000
         center_frame_idx = int(frame_name)
         num_half_frames = results['num_input_frames'] // 2
 
@@ -1105,7 +1131,7 @@ class GenerateSegmentIndices:
 
 @PIPELINES.register_module()
 class MirrorSequence:
-    """Extend short sequences (e.g. Vimeo-90K) by mirroring the sequences
+    """Extend short sequences (e.g. Vimeo-90K) by mirroring the sequences.
 
     Given a sequence with N frames (x1, ..., xN), extend the sequence to
     (x1, ..., xN, xN, ..., x1).
@@ -1145,7 +1171,6 @@ class MirrorSequence:
 @PIPELINES.register_module()
 class CopyValues:
     """Copy the value of a source key to a destination key.
-
 
     It does the following: results[dst_key] = results[src_key] for
     (src_key, dst_key) in zip(src_keys, dst_keys).
@@ -1255,7 +1280,6 @@ class UnsharpMasking:
 
     Added keys are "xxx_unsharp", where "xxx" are the attributes specified
     in "keys".
-
     """
 
     def __init__(self, kernel_size, sigma, weight, threshold, keys):

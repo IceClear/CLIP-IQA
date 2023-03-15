@@ -56,11 +56,13 @@ class ResidualBlockNoBN(nn.Module):
             Default: 1.0.
     """
 
-    def __init__(self, mid_channels=64, res_scale=1.0):
+    def __init__(self, mid_channels=64, res_scale=1.0, groups=1):
         super().__init__()
         self.res_scale = res_scale
-        self.conv1 = nn.Conv2d(mid_channels, mid_channels, 3, 1, 1, bias=True)
-        self.conv2 = nn.Conv2d(mid_channels, mid_channels, 3, 1, 1, bias=True)
+        self.conv1 = nn.Conv2d(
+            mid_channels, mid_channels, 3, 1, 1, bias=True, groups=groups)
+        self.conv2 = nn.Conv2d(
+            mid_channels, mid_channels, 3, 1, 1, bias=True, groups=groups)
 
         self.relu = nn.ReLU(inplace=True)
 
@@ -72,11 +74,10 @@ class ResidualBlockNoBN(nn.Module):
     def init_weights(self):
         """Initialize weights for ResidualBlockNoBN.
 
-        Initialization methods like `kaiming_init` are for VGG-style
-        modules. For modules with residual paths, using smaller std is
-        better for stability and performance. We empirically use 0.1.
-        See more details in "ESRGAN: Enhanced Super-Resolution Generative
-        Adversarial Networks"
+        Initialization methods like `kaiming_init` are for VGG-style modules.
+        For modules with residual paths, using smaller std is better for
+        stability and performance. We empirically use 0.1. See more details in
+        "ESRGAN: Enhanced Super-Resolution Generative Adversarial Networks"
         """
 
         for m in [self.conv1, self.conv2]:
