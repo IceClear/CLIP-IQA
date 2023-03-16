@@ -27,6 +27,7 @@ from .sr_vimeo90k_dataset import SRVimeo90KDataset
 from .sr_vimeo90k_multiple_gt_dataset import SRVimeo90KMultipleGTDataset
 from .vfi_vimeo90k_7frames_dataset import VFIVimeo90K7FramesDataset
 from .vfi_vimeo90k_dataset import VFIVimeo90KDataset
+from .iqa_koniq_dataset import IQAKoniqDataset, IQALIVEITWDataset, IQAAVADataset
 
 __all__ = [
     'DATASETS', 'PIPELINES', 'build_dataset', 'build_dataloader',
@@ -38,5 +39,5 @@ __all__ = [
     'SRREDSMultipleGTDataset', 'SRVimeo90KMultipleGTDataset',
     'SRTestMultipleGTDataset', 'SRFolderRefDataset', 'SRFacialLandmarkDataset',
     'SRFolderMultipleGTDataset', 'SRFolderVideoDataset', 'BaseVFIDataset',
-    'VFIVimeo90KDataset', 'VFIVimeo90K7FramesDataset'
+    'VFIVimeo90KDataset', 'VFIVimeo90K7FramesDataset', 'IQAKoniqDataset', 'IQALIVEITWDataset'
 ]
