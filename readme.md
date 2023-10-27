@@ -67,6 +67,10 @@ python demo/clipiqa_koniq_demo.py --config configs/clipiqa/clipiqa_coop_koniq.py
 
 [Note] For testing on a single image, please refer to [here](https://github.com/IceClear/CLIP-IQA/tree/main/demo/clipiqa_single_image_demo.py) for details.
 
+### Other Implementations
+- [torchmetrics](https://lightning.ai/docs/torchmetrics/stable/multimodal/clip_iqa.html)
+- [IQA-Pytorch](https://github.com/chaofengc/IQA-PyTorch)
+
 ### Demo
 
 #### :sparkles: Versatile Quality Assessment
